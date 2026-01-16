@@ -407,6 +407,13 @@ function initApp() {
       updateSceneCounter(sceneIndex);
       startAnimation();
 
+      // Fade to black after 12s on tubes scene
+      if (sceneName === 'tubes') {
+        setTimeout(() => {
+          gsap.to(postFX.opacity, { value: 0, duration: 2, ease: 'power2.in' });
+        }, 12000);
+      }
+
       // Schedule next scene
       setTimeout(() => {
         sceneIndex++;

@@ -522,6 +522,7 @@ export function createTubesAnimation(pills, pillGroup) {
     }
   );
 
+
   // Group pills by row (each row has 10 pills: 5 original + 5 duplicates)
   const rowPills = [];
   for (let row = 0; row < ROWS; row++) {
