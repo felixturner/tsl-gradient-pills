@@ -20,9 +20,13 @@ import { createGUI } from './gui.js';
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 
-// Group for rotation
+// Parent group for responsive scaling (doesn't interfere with animations)
+const sceneGroup = new THREE.Group();
+scene.add(sceneGroup);
+
+// Group for rotation (child of sceneGroup)
 const pillGroup = new THREE.Group();
-scene.add(pillGroup);
+sceneGroup.add(pillGroup);
 
 // Rotate pills to match reference (diagonal layout)
 const ROTATION_Z = -0.5; // ~28 degrees
@@ -237,6 +241,15 @@ function resize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
+  // Responsive scaling: scale down scene for narrow viewports
+  // aspect >= 1: scale = 1, aspect 0.5-1: lerp from 0.6-1, aspect < 0.5: scale = 0.6
+  let responsiveScale = 1;
+  if (aspect < 1) {
+    const t = Math.max(0, (aspect - 0.5) / 0.5); // 0 at aspect=0.5, 1 at aspect=1
+    responsiveScale = 0.6 + t * 0.4; // lerp from 0.6 to 1
+  }
+  sceneGroup.scale.setScalar(responsiveScale);
+
   postFX.resize(supersample);
 }
 window.addEventListener('resize', resize);
@@ -251,26 +264,6 @@ function animate() {
     getGlowPlanes()
   );
 }
-
-// Pill selection via raycasting
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-function onCanvasClick(event) {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-  const meshes = getCurrentPills().map((p) => p.mesh);
-  const intersects = raycaster.intersectObjects(meshes);
-  if (intersects.length > 0) {
-    const clickedMesh = intersects[0].object;
-    const index = meshes.indexOf(clickedMesh);
-    if (index !== -1) {
-      gui.selectPill(index);
-    }
-  }
-}
-renderer.domElement.addEventListener('click', onCanvasClick);
 
 // Scene navigation
 const sceneOrder = ['duo', 'grid', 'tubes', 'mono'];
@@ -317,6 +310,32 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+// Swipe gesture navigation
+let touchStartX = 0;
+let touchStartY = 0;
+const SWIPE_THRESHOLD = 50;
+
+window.addEventListener('touchstart', (e) => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+});
+
+window.addEventListener('touchend', (e) => {
+  const touchEndX = e.changedTouches[0].clientX;
+  const touchEndY = e.changedTouches[0].clientY;
+  const deltaX = touchEndX - touchStartX;
+  const deltaY = touchEndY - touchStartY;
+
+  // Only trigger if horizontal swipe is dominant
+  if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > SWIPE_THRESHOLD) {
+    if (deltaX < 0) {
+      nextScene();
+    } else {
+      prevScene();
+    }
+  }
+});
+
 // Toggle GUI and stats visibility
 let controlsVisible = false;
 function toggleControls() {
@@ -353,6 +372,7 @@ gui = createGUI({
   sceneOrder,
   updateSceneCounter,
   renderer,
+  camera,
 });
 
 // Initialize app after WebGPU is ready

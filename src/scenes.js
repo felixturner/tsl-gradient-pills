@@ -81,8 +81,8 @@ export function buildMonoScene(pillGroup) {
   const pill = new Pill(RADIUS, 5, duoConfig.palettes[0], duoConfig.stops[0]);
   pill.setPosition(0, 0).addTo(pillGroup);
   pill.uniforms.bend.value = duoConfig.bends[0];
-  pill.mesh.scale.setScalar(0.8);
-  pill.glowPlane.mesh.scale.setScalar(0.8);
+  pill.mesh.scale.setScalar(0.7);
+  pill.glowPlane.mesh.scale.setScalar(0.7);
   pills.push(pill);
 
   return { pills, columnGroups: [] };

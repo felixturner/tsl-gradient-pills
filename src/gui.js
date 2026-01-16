@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 export function createGUI({
@@ -15,6 +16,7 @@ export function createGUI({
   sceneOrder,
   updateSceneCounter,
   renderer,
+  camera,
 }) {
   const gui = new GUI({ container: document.getElementById('gui-container') });
 
@@ -26,7 +28,7 @@ export function createGUI({
   // Scene presets (rotation in degrees, 0-360)
   const scenePresets = {
     mono: {
-      rotation: 90,
+      rotation: 0,
       glowFalloff: 1.5,
       edgeGlow: 1.0,
       waveAmp: 0,
@@ -359,6 +361,26 @@ const bends = ${JSON.stringify(bendsOut)};`;
     selectedPillIndex = index;
     updateGUIFromPill(index);
   }
+
+  // Pill selection via raycasting (click on pill to edit its colors in the GUI)
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+
+  function onCanvasClick(event) {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const meshes = pills().map((p) => p.mesh);
+    const intersects = raycaster.intersectObjects(meshes);
+    if (intersects.length > 0) {
+      const clickedMesh = intersects[0].object;
+      const index = meshes.indexOf(clickedMesh);
+      if (index !== -1) {
+        selectPill(index);
+      }
+    }
+  }
+  renderer.domElement.addEventListener('click', onCanvasClick);
 
   function getSavedEdgeGlow() {
     return savedEdgeGlow;
