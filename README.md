@@ -12,12 +12,12 @@ Recreating the Blender gradient pills effect by Bad Normals.
 - B-spline gradient coloring with normal-based bend
 - Selective bloom post-processing (masked to background)
 - Glow planes, wave deformation, fade transitions
-- GUI controls for all parameters (Press 'q' to toggle controls)
+- GUI controls for all parameters.
 
 ## Tech Stack
 
 - Three.js with TSL (Three Shading Language) + WebGPU
-- GSAP, Vite, Vanilla JS
+- Vite, GSAP, Vanilla JS
 
 ## Requirements
 

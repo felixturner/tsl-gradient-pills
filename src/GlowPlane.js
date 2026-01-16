@@ -94,16 +94,5 @@ export class GlowPlane {
     this.material.opacityNode = add(baseOpacity, mul(dither, float(0.5)));
 
     this.mesh = new THREE.Mesh(this.geometry, this.material);
-    this.mesh.position.z = -0.1;
-  }
-
-  setPosition(x, y, z = -0.1) {
-    this.mesh.position.set(x, y, z);
-    return this;
-  }
-
-  addTo(parent) {
-    parent.add(this.mesh);
-    return this;
   }
 }
