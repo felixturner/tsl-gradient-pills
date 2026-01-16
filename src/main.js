@@ -380,11 +380,41 @@ function initApp() {
 
   // Wait for fade to complete before switching to first scene
   setTimeout(() => {
-    // Switch to default scene and start animation
-    switchScene('duo');
-    gui.applySceneSettings('duo');
-    updateSceneCounter(0);
-    startAnimation();
+    // Hide footer for recording mode
+    const footer = document.querySelector('.footer');
+    if (footer) {
+      footer.style.display = 'none';
+    }
+
+    // Recording mode: play scenes 1, 2, 3 in sequence
+    const recordingScenes = ['duo', 'grid', 'tubes'];
+    const sceneDurations = [7300, 9200, 15000]; // ms per scene
+    let sceneIndex = 0;
+
+    function playNextScene() {
+      if (sceneIndex >= recordingScenes.length) {
+        console.log('Recording sequence complete');
+        return;
+      }
+
+      const sceneName = recordingScenes[sceneIndex];
+      console.log(`Playing scene: ${sceneName}`);
+      switchScene(sceneName);
+      gui.applySceneSettings(sceneName);
+      gui.updatePillSelectorMax();
+      gui.selectPill(0);
+      gui.setScene(sceneName);
+      updateSceneCounter(sceneIndex);
+      startAnimation();
+
+      // Schedule next scene
+      setTimeout(() => {
+        sceneIndex++;
+        playNextScene();
+      }, sceneDurations[sceneIndex]);
+    }
+
+    playNextScene();
 
     // Hide loading screen completely
     if (loading) {

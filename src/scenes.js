@@ -273,7 +273,7 @@ export function createDuoAnimation(pills, pillGroup) {
   });
 
   // Create looping timeline
-  const timeline = gsap.timeline({ repeat: -1 });
+  const timeline = gsap.timeline({ repeat: -1, repeatDelay: 0.5 });
 
   // Set initial positions at time 0 (ensures correct state on restart)
   timeline.set(
