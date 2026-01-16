@@ -381,7 +381,7 @@ function createDuoAnimation(pills, pillGroup) {
 // Create grid scene animation (looping)
 function createGridAnimation(columnGroups, pills, pillGroup, COLS) {
   const SLIDE_DURATION = 1.2;
-  const OFF_SCREEN = 12;
+  const OFF_SCREEN = 15;
   const STAGGER = 0.4;
   const HOLD_DURATION = 2;
   const SCALE_START = 0.4;

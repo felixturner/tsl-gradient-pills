@@ -34,14 +34,14 @@ export function createGUI({
       glowIntensity: 0.5,
     },
     grid: {
-      rotation: 19,
+      rotation: 109,
       glowFalloff: 5,
       edgeGlow: 1.5,
       waveAmp: 0,
       glowIntensity: 0.3,
     },
     duo: {
-      rotation: 331,
+      rotation: 61,
       glowFalloff: 1.5,
       edgeGlow: 1.0,
       waveAmp: 0,

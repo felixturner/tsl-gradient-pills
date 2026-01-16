@@ -13,6 +13,7 @@ scene.background = new THREE.Color(0x000000);
 
 // Parent group for responsive scaling (doesn't interfere with animations)
 const sceneGroup = new THREE.Group();
+sceneGroup.scale.setScalar(1.2);
 scene.add(sceneGroup);
 
 // Group for rotation (child of sceneGroup)
@@ -127,24 +128,22 @@ function switchScene(sceneName) {
 }
 
 // Core resize logic (called immediately)
+// Hardcoded canvas size for recording mode
+const CANVAS_WIDTH = 1924;
+const CANVAS_HEIGHT = 1084;
+
 function doResize() {
   const frustumSize = 5.5;
-  const aspect = window.innerWidth / window.innerHeight;
+  const aspect = CANVAS_WIDTH / CANVAS_HEIGHT;
   camera.left = (-frustumSize * aspect) / 2;
   camera.right = (frustumSize * aspect) / 2;
   camera.top = frustumSize / 2;
   camera.bottom = -frustumSize / 2;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(CANVAS_WIDTH, CANVAS_HEIGHT);
+  renderer.setPixelRatio(1);
 
-  // Responsive scaling: scale down scene for narrow viewports
-  let responsiveScale = 1;
-  if (aspect < 1) {
-    const t = Math.max(0, (aspect - 0.5) / 0.5);
-    responsiveScale = 0.6 + t * 0.4;
-  }
-  sceneGroup.scale.setScalar(responsiveScale);
+  // Responsive scaling disabled for recording mode (keep fixed 1.2 scale)
 
   postFX.resize(supersample);
 }
@@ -208,6 +207,8 @@ window.addEventListener('keydown', (e) => {
     prevScene();
   } else if (e.key === 'ArrowRight') {
     nextScene();
+  } else if (e.key === 'q' || e.key === 'Q') {
+    toggleControls();
   }
 });
 
@@ -312,13 +313,13 @@ function initApp() {
 
     // Recording mode: play scenes 1, 2, 3 in sequence
     const recordingScenes = ['duo', 'grid', 'tubes'];
-    const sceneDurations = [7300, 9200, 15000]; // ms per scene
+    const sceneDurations = [7300, 9000, 10000]; // ms per scene
     let sceneIndex = 0;
 
     function playNextScene() {
       if (sceneIndex >= recordingScenes.length) {
-        console.log('Recording sequence complete');
-        return;
+        // Loop back to start
+        sceneIndex = 0;
       }
 
       const sceneName = recordingScenes[sceneIndex];
@@ -331,11 +332,11 @@ function initApp() {
       updateSceneCounter(sceneIndex);
       startAnimation();
 
-      // Fade to black after 12s on tubes scene
+      // Fade to black after 8s on tubes scene (1s fade, ends at 9s, scene is 10s)
       if (sceneName === 'tubes') {
         setTimeout(() => {
-          gsap.to(postFX.opacity, { value: 0, duration: 2, ease: 'power2.in' });
-        }, 12000);
+          gsap.to(postFX.opacity, { value: 0, duration: 1, ease: 'power2.in' });
+        }, 8000);
       }
 
       // Schedule next scene

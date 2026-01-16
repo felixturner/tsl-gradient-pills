@@ -65,7 +65,11 @@ export class PostFX {
       .add(maskedEdges)
       .add(maskedGlow);
 
-    // Static RGB sensor noise using sin/fract hash
+    // Fade from black to scene
+    const fadeColor = vec3(0, 0, 0);
+    const faded = finalComposite.mul(this.opacity).add(fadeColor.mul(sub(float(1), this.opacity)));
+
+    // Static RGB sensor noise using sin/fract hash (applied AFTER fade so it's visible on black)
     const seed1 = add(mul(screenUV.x, float(12.9898)), mul(screenUV.y, float(78.233)));
     const seed2 = add(mul(screenUV.x, float(93.9898)), mul(screenUV.y, float(67.345)));
     const seed3 = add(mul(screenUV.x, float(43.332)), mul(screenUV.y, float(93.532)));
@@ -74,10 +78,7 @@ export class PostFX {
     const noiseB = fract(mul(sin(seed3), float(43758.5453)));
     const noise = vec3(noiseR, noiseG, noiseB);
     const noiseOffset = mul(sub(noise, float(0.5)), this.noiseStrength);
-    const finalWithNoise = finalComposite.add(noiseOffset);
-    // Fade from black to scene
-    const fadeColor = vec3(0, 0, 0);
-    const finalOutput = finalWithNoise.mul(this.opacity).add(fadeColor.mul(sub(float(1), this.opacity)));
+    const finalOutput = faded.add(noiseOffset);
 
     // Select output based on debug view
     const debugOutput = select(
