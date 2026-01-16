@@ -99,7 +99,7 @@ export class Pill {
 
   setPosition(x, y, z = 0) {
     this.mesh.position.set(x, y, z);
-    this.glowPlane.mesh.position.set(x, y, z - 0.1);
+    this.glowPlane.mesh.position.set(x, y, z);
     return this;
   }
 

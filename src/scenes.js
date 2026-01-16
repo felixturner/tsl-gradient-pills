@@ -2,27 +2,10 @@ import * as THREE from 'three';
 import gsap from 'gsap';
 import { Pill } from './Pill.js';
 
-// Mono scene animation (no-op)
-export function createMonoAnimation() {
-  return {
-    play: () => {},
-    pause: () => {},
-    kill: () => {},
-    restart: () => {},
-  };
-}
+const PILL_RADIUS = 0.8;
+export const sceneOrder = ['duo', 'grid', 'tubes', 'mono'];
 
-// Constants
-const RADIUS = 0.8;
-const COLS = 6;
-const TOP_Y = 5;
-const BOT_Y = -5;
-const SPACING_X_FACTOR = 2; // Pills touch horizontally (radius * 2)
-
-// Meeting points per column (offset from center)
-const meetingOffsets = [0.3, -1.5, 1.3, -1.0, -0.2, 2.0];
-
-// Duo scene config
+// Duo scene colors
 const duoConfig = {
   palettes: [
     ['#321b23', '#4a1040', '#5900ff', '#ff4d00'],
@@ -35,7 +18,7 @@ const duoConfig = {
   bends: [0.614, -0.3],
 };
 
-// Grid scene config (exported from Blender, selection order)
+// Grid scene colors
 const gridConfig = {
   palettes: [
     ['#003cf0', '#09b2fe', '#f024fe', '#0b0b0b'],
@@ -71,62 +54,105 @@ const gridConfig = {
   ],
 };
 
-// Build mono scene (1 pill, no rotation)
-export function buildMonoScene(pillGroup) {
-  const pills = [];
-
-  // Reset group rotation
-  pillGroup.rotation.z = 0;
-
-  const pill = new Pill(RADIUS, 5, duoConfig.palettes[0], duoConfig.stops[0]);
-  pill.setPosition(0, 0).addTo(pillGroup);
-  pill.uniforms.bend.value = duoConfig.bends[0];
-  pill.mesh.scale.setScalar(0.7);
-  pill.glowPlane.mesh.scale.setScalar(0.7);
-  pills.push(pill);
-
-  return { pills, columnGroups: [] };
-}
-
 // Build duo scene (2 pills)
-export function buildDuoScene(pillGroup) {
-  const pills = [];
-
+function buildDuoScene(container) {
   // Left pill
   const leftPill = new Pill(
-    RADIUS,
+    PILL_RADIUS,
     5,
     duoConfig.palettes[0],
     duoConfig.stops[0]
   );
-  leftPill.setPosition(-RADIUS, 2).addTo(pillGroup);
+  leftPill.setPosition(-PILL_RADIUS, 2).addTo(container);
   leftPill.uniforms.bend.value = duoConfig.bends[0];
-  pills.push(leftPill);
 
   // Right pill
   const rightPill = new Pill(
-    RADIUS,
+    PILL_RADIUS,
     5,
     duoConfig.palettes[1],
     duoConfig.stops[1]
   );
-  rightPill.setPosition(RADIUS, -2).addTo(pillGroup);
+  rightPill.setPosition(PILL_RADIUS, -2).addTo(container);
   rightPill.uniforms.bend.value = duoConfig.bends[1];
-  pills.push(rightPill);
 
-  return { pills, columnGroups: [] };
+  const pills = [leftPill, rightPill];
+  const animation = createDuoAnimation(pills, container);
+
+  return { pills, columnGroups: [], animation };
+}
+
+// Build grid scene (6x2 pills)
+function buildGridScene(container) {
+  const COLS = 6;
+  const TOP_Y = 5;
+  const BOT_Y = -5;
+  const SPACING_X_FACTOR = 2; // Pills touch horizontally (radius * 2)
+  const meetingOffsets = [0.3, -1.5, 1.3, -1.0, -0.2, 2.0];
+
+  const pills = [];
+  const columnGroups = [];
+  const spacingX = PILL_RADIUS * SPACING_X_FACTOR;
+  const startX = -((COLS - 1) * spacingX) / 2;
+
+  for (let col = 0; col < COLS; col++) {
+    const x = startX + col * spacingX;
+    const meetY = meetingOffsets[col];
+
+    // Create a group for this column
+    const colGroup = new THREE.Group();
+    colGroup.position.set(x, meetY, 0);
+    container.add(colGroup);
+    columnGroups.push(colGroup);
+
+    // Calculate pill lengths
+    const EXTRA_LEN = 3;
+    const topLen = TOP_Y - meetY - 2 * PILL_RADIUS + EXTRA_LEN;
+    const botLen = meetY - BOT_Y - 2 * PILL_RADIUS + EXTRA_LEN;
+
+    const topPillY = (TOP_Y - meetY) / 2 + EXTRA_LEN / 2;
+    const botPillY = (BOT_Y - meetY) / 2 - EXTRA_LEN / 2;
+
+    // Top pill
+    const topIdx = col * 2;
+    const topPill = new Pill(
+      PILL_RADIUS,
+      topLen,
+      gridConfig.palettes[topIdx],
+      gridConfig.stops[topIdx]
+    );
+    topPill.setPosition(0, topPillY).addTo(colGroup);
+    topPill.uniforms.bend.value = gridConfig.bends[topIdx];
+    pills.push(topPill);
+
+    // Bottom pill
+    const botIdx = col * 2 + 1;
+    const botPill = new Pill(
+      PILL_RADIUS,
+      botLen,
+      gridConfig.palettes[botIdx],
+      gridConfig.stops[botIdx]
+    );
+    botPill.setPosition(0, botPillY).addTo(colGroup);
+    botPill.uniforms.bend.value = gridConfig.bends[botIdx];
+    pills.push(botPill);
+  }
+
+  const animation = createGridAnimation(columnGroups, pills, container, COLS);
+
+  return { pills, columnGroups, animation };
 }
 
 // Build tubes scene (6x5 grid with random horizontal offsets)
 // Pills are vertical, the whole group is rotated 90 degrees
-export function buildTubesScene(pillGroup) {
+function buildTubesScene(container) {
   const pills = [];
-  const TUBE_RADIUS = 0.65;
+  const TUBE_PILL_RADIUS = 0.65;
   const TUBE_LENGTH_MAX = 3;
   const TUBE_LENGTH_MIN = TUBE_LENGTH_MAX * 0.5;
   const ROWS = 6;
   const TUBE_COLS = 5;
-  const SPACING_X = TUBE_RADIUS * 2;
+  const SPACING_X = TUBE_PILL_RADIUS * 2;
 
   // Use grid palettes/stops for random selection
   const allPalettes = gridConfig.palettes;
@@ -153,7 +179,7 @@ export function buildTubesScene(pillGroup) {
     }
 
     // Calculate positions so pills just touch
-    const pillHeights = rowLengths.map((len) => len + TUBE_RADIUS * 2);
+    const pillHeights = rowLengths.map((len) => len + TUBE_PILL_RADIUS * 2);
     const totalRowHeight = pillHeights.reduce((sum, h) => sum + h, 0);
     let currentY = totalRowHeight / 2;
 
@@ -168,12 +194,12 @@ export function buildTubesScene(pillGroup) {
       currentY -= pillHeight;
 
       const pill = new Pill(
-        TUBE_RADIUS,
+        TUBE_PILL_RADIUS,
         pillLength,
         allPalettes[rowPaletteIdxs[col]],
         allStops[rowStopsIdxs[col]]
       );
-      pill.setPosition(x, y, 0).addTo(pillGroup);
+      pill.setPosition(x, y, 0).addTo(container);
       pill.uniforms.bend.value = allBends[rowBendIdxs[col]];
       pills.push(pill);
     }
@@ -188,77 +214,81 @@ export function buildTubesScene(pillGroup) {
       currentY -= pillHeight;
 
       const pill = new Pill(
-        TUBE_RADIUS,
+        TUBE_PILL_RADIUS,
         pillLength,
         allPalettes[rowPaletteIdxs[col]],
         allStops[rowStopsIdxs[col]]
       );
-      pill.setPosition(x, y, 0).addTo(pillGroup);
+      pill.setPosition(x, y, 0).addTo(container);
       pill.uniforms.bend.value = allBends[rowBendIdxs[col]];
       pills.push(pill);
     }
   }
 
-  return { pills, columnGroups: [] };
+  const animation = createTubesAnimation(pills, container);
+
+  return { pills, columnGroups: [], animation };
 }
 
-// Build grid scene (6x2 pills)
-export function buildGridScene(pillGroup) {
-  const pills = [];
-  const columnGroups = [];
-  const spacingX = RADIUS * SPACING_X_FACTOR;
-  const startX = -((COLS - 1) * spacingX) / 2;
+// Build mono scene
+function buildMonoScene(container) {
+  const pill = new Pill(
+    PILL_RADIUS,
+    5,
+    duoConfig.palettes[0],
+    duoConfig.stops[0]
+  );
+  pill.setPosition(0, 0).addTo(container);
+  pill.uniforms.bend.value = duoConfig.bends[0];
+  pill.mesh.scale.setScalar(0.7);
+  pill.glowPlane.mesh.scale.setScalar(0.7);
 
-  for (let col = 0; col < COLS; col++) {
-    const x = startX + col * spacingX;
-    const meetY = meetingOffsets[col];
+  const animation = {
+    play: () => {},
+    pause: () => {},
+    kill: () => {},
+    restart: () => {},
+  };
 
-    // Create a group for this column
-    const colGroup = new THREE.Group();
-    colGroup.position.set(x, meetY, 0);
-    pillGroup.add(colGroup);
-    columnGroups.push(colGroup);
+  return { pills: [pill], columnGroups: [], animation };
+}
 
-    // Calculate pill lengths
-    const EXTRA_LEN = 3;
-    const topLen = TOP_Y - meetY - 2 * RADIUS + EXTRA_LEN;
-    const botLen = meetY - BOT_Y - 2 * RADIUS + EXTRA_LEN;
+// Scene builders map
+const sceneBuilders = {
+  mono: buildMonoScene,
+  duo: buildDuoScene,
+  grid: buildGridScene,
+  tubes: buildTubesScene,
+};
 
-    const topPillY = (TOP_Y - meetY) / 2 + EXTRA_LEN / 2;
-    const botPillY = (BOT_Y - meetY) / 2 - EXTRA_LEN / 2;
+// Build all scenes and return scenes object
+export function buildAllScenes(pillGroup) {
+  const scenes = {};
 
-    // Top pill
-    const topIdx = col * 2;
-    const topPill = new Pill(
-      RADIUS,
-      topLen,
-      gridConfig.palettes[topIdx],
-      gridConfig.stops[topIdx]
+  sceneOrder.forEach((sceneName) => {
+    const container = new THREE.Group();
+    pillGroup.add(container);
+
+    const { pills, columnGroups, animation } =
+      sceneBuilders[sceneName](container);
+
+    pills.forEach(
+      (pill) => (pill.uniforms.waveRotation.value = pillGroup.rotation.z)
     );
-    topPill.setPosition(0, topPillY).addTo(colGroup);
-    topPill.uniforms.bend.value = gridConfig.bends[topIdx];
-    pills.push(topPill);
 
-    // Bottom pill
-    const botIdx = col * 2 + 1;
-    const botPill = new Pill(
-      RADIUS,
-      botLen,
-      gridConfig.palettes[botIdx],
-      gridConfig.stops[botIdx]
-    );
-    botPill.setPosition(0, botPillY).addTo(colGroup);
-    botPill.uniforms.bend.value = gridConfig.bends[botIdx];
-    pills.push(botPill);
-  }
+    animation.pause();
+    // Leave container visible for shader compilation render in initApp
 
-  return { pills, columnGroups };
+    scenes[sceneName] = { container, pills, columnGroups, animation };
+  });
+
+  return scenes;
 }
 
 // Create duo scene animation (looping)
-export function createDuoAnimation(pills, pillGroup) {
+function createDuoAnimation(pills, pillGroup) {
   const SLIDE_DURATION = 2;
-  const OFF_SCREEN = 15;
+  const OFF_SCREEN = 20;
   const STAGGER = 0.5;
   const HOLD_DURATION = 2;
   const SCALE_START = 0.8;
@@ -349,7 +379,7 @@ export function createDuoAnimation(pills, pillGroup) {
 }
 
 // Create grid scene animation (looping)
-export function createGridAnimation(columnGroups, pills, pillGroup) {
+function createGridAnimation(columnGroups, pills, pillGroup, COLS) {
   const SLIDE_DURATION = 1.2;
   const OFF_SCREEN = 12;
   const STAGGER = 0.4;
@@ -493,7 +523,7 @@ export function createGridAnimation(columnGroups, pills, pillGroup) {
 }
 
 // Create tubes scene animation (continuous scrolling)
-export function createTubesAnimation(pills, pillGroup) {
+function createTubesAnimation(pills, pillGroup) {
   const SCALE_START = 1;
   const SCALE_END = 0.6;
   const ZOOM_DURATION = 3;
@@ -505,7 +535,7 @@ export function createTubesAnimation(pills, pillGroup) {
   });
 
   const TUBE_COLS = 5;
-  const PILLS_PER_ROW = TUBE_COLS * 2; // 8 original + 8 duplicates
+  const PILLS_PER_ROW = TUBE_COLS * 2; // 5 original + 5 duplicates
   const ROWS = 6;
   const DURATION = 12; // seconds to travel full column length
 

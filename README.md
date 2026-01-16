@@ -17,7 +17,7 @@ Recreating the Blender gradient pills effect by Bad Normals.
 ## Tech Stack
 
 - Three.js with TSL (Three Shading Language) + WebGPU
-- GSAP, Vite, Vanilla JS
+- Vite, GSAP, Vanilla JS
 
 ## Requirements
 

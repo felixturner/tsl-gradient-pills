@@ -11,7 +11,6 @@ export function createGUI({
   stopAnimation,
   getSupersample,
   setSupersample,
-  scenes,
   orbitControls,
   sceneOrder,
   updateSceneCounter,
@@ -92,9 +91,9 @@ export function createGUI({
   }
 
   // Scene selector
-  const sceneParams = { scene: 'duo' };
+  const sceneParams = { scene: sceneOrder[0] };
   const sceneController = gui
-    .add(sceneParams, 'scene', ['duo', 'grid', 'tubes', 'mono'])
+    .add(sceneParams, 'scene', sceneOrder)
     .name('scene');
 
   // Rotation control (0-360 degrees)
