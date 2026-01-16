@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TSL Gradient Pills</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        background: #111;
+        height: 100vh;
+      }
+      canvas {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+
+      .footer {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: 'Inter', sans-serif;
+        font-weight: 400;
+        font-size: 14px;
+        color: #ccc;
+        z-index: 10;
+      }
+
+      .footer a {
+        color: white;
+        text-decoration: none;
+      }
+      .footer-nav {
+        color: white;
+        cursor: pointer;
+      }
+      .footer-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+      }
+      #scene-counter {
+        font-family: monospace;
+      }
+
+      .loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: white;
+        opacity: 0.8;
+        z-index: 1000;
+        transition: opacity 0.3s ease-out;
+        padding: 0 40px;
+        text-align: center;
+        white-space: pre-line;
+        line-height: 1.6;
+      }
+      .loading.fade-out {
+        opacity: 0;
+      }
+
+      @media (max-width: 600px) {
+        .footer {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loading" id="loading"></div>
+    <div
+      id="gui-container"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        right: 0;
+        z-index: 100;
+        max-height: 100vh;
+        overflow-y: auto;
+      "
+    ></div>
+    <div class="footer">
+      <div class="footer-left">
+        TSL Gradient Pills by
+        <a href="https://www.airtight.cc/" target="_blank">Felix Turner</a>
+        |
+        <a
+          href="https://github.com/felixturner/tsl-gradient-pills"
+          target="_blank"
+          >GitHub</a
+        >
+      </div>
+      <div class="footer-right">
+        <span class="footer-hint">Q : Show Controls</span>|
+        <span class="footer-nav" id="prev-scene">← Prev</span>
+        <span id="scene-counter">1/4</span>
+        <span class="footer-nav" id="next-scene">Next →</span>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

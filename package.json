@@ -1,0 +1,25 @@
+{
+  "name": "tsl-gradient-pills",
+  "version": "1.0.0",
+  "description": "Three.js gradient pills effect using TSL and WebGPU",
+  "keywords": ["threejs", "webgpu", "tsl", "shaders", "animation"],
+  "author": "Felix Turner <airtight.cc>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/airtight/tsl-gradient-pills"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "gsap": "^3.14.2",
+    "three": "^0.172.0"
+  }
+}
