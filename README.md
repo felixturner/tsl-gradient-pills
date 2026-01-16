@@ -2,7 +2,9 @@
 
 Three.js gradient pills effect using TSL (Three Shading Language) and WebGPU.
 
-Recreating the Blender gradient pills effect from [Bad Normals](https://badnormals.com/) - [YouTube Tutorial](https://www.youtube.com/watch?v=oAKrQboXo78)
+Recreating the Blender gradient pills effect by Bad Normals.
+
+[Live Demo](https://felixturner.github.io/tsl-gradient-pills/)
 
 ## Features
 
@@ -54,7 +56,9 @@ Pills can be deformed with a sine wave along their length. The wave direction is
 
 ## Credits
 
-Felix Turner | [airtight.cc](https://airtight.cc)
+- Felix Turner | [airtight.cc](https://airtight.cc)
+- Effect Design by [Bad Normals](https://badnormals.com/)
+- Inspired by [damonxart](https://www.instagram.com/damonxart/)
 
 ## License
 
