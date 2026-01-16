@@ -314,8 +314,6 @@ window.addEventListener('keydown', (e) => {
     prevScene();
   } else if (e.key === 'ArrowRight') {
     nextScene();
-  } else if (e.key === 'q' || e.key === 'Q') {
-    toggleControls();
   }
 });
 
@@ -333,6 +331,9 @@ function toggleControls() {
 // Footer navigation buttons
 document.getElementById('prev-scene')?.addEventListener('click', prevScene);
 document.getElementById('next-scene')?.addEventListener('click', nextScene);
+document
+  .getElementById('show-controls')
+  ?.addEventListener('click', toggleControls);
 
 // GUI
 gui = createGUI({
