@@ -11,6 +11,7 @@ import {
   sub,
   div,
   add,
+  abs,
   smoothstep,
   clamp,
 } from 'three/tsl';
@@ -76,7 +77,8 @@ export class Pill {
     );
     this.material.positionNode = deformedPosition;
 
-    const edgeFactor = sub(1, normalLocal.z);
+    // Use abs(normalLocal.z) so back face mirrors front face gradient
+    const edgeFactor = sub(1, abs(normalLocal.z));
     const tRaw = add(yNorm, mul(edgeFactor, u.bend));
     const t = clamp(tRaw, 0, 1);
 
@@ -87,10 +89,11 @@ export class Pill {
     );
     this.material.colorNode = mul(gradientColor, u.baseColor);
 
-    const edgeFalloff = smoothstep(u.edgeWidth, 0.0, normalLocal.z);
+    const edgeFalloff = smoothstep(u.edgeWidth, 0.0, abs(normalLocal.z));
     this.material.emissiveNode = mul(gradientColor, mul(edgeFalloff, u.edgeGlow));
 
     this.mesh = new THREE.Mesh(this.geometry, this.material);
+    this.mesh.frustumCulled = false; // Disable culling for shader warmup
     this.mesh.userData.uniforms = this.uniforms;
 
     // Create associated glow plane

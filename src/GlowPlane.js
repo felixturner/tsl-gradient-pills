@@ -48,6 +48,7 @@ export class GlowPlane {
     this.material.transparent = true;
     this.material.blending = THREE.AdditiveBlending;
     this.material.depthWrite = false;
+    this.material.side = THREE.DoubleSide;
 
     // Wave deformation (same as pill)
     const curveX = calcWaveOffset(positionWorld, u.waveRotation, u.waveFreq, u.wavePhase, u.waveAmp);
@@ -94,5 +95,6 @@ export class GlowPlane {
     this.material.opacityNode = add(baseOpacity, mul(dither, float(0.5)));
 
     this.mesh = new THREE.Mesh(this.geometry, this.material);
+    this.mesh.frustumCulled = false; // Disable culling for shader warmup
   }
 }

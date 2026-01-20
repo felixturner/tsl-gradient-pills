@@ -3,7 +3,7 @@ import gsap from 'gsap';
 import { Pill } from './Pill.js';
 
 const PILL_RADIUS = 0.8;
-export const sceneOrder = ['duo', 'grid', 'tubes', 'mono'];
+export const sceneOrder = ['duo', 'grid', 'waves', 'mono'];
 
 // Duo scene colors
 const duoConfig = {
@@ -143,9 +143,9 @@ function buildGridScene(container) {
   return { pills, columnGroups, animation };
 }
 
-// Build tubes scene (6x5 grid with random horizontal offsets)
+// Build waves scene (6x5 grid with random horizontal offsets)
 // Pills are vertical, the whole group is rotated 90 degrees
-function buildTubesScene(container) {
+function buildWavesScene(container) {
   const pills = [];
   const TUBE_PILL_RADIUS = 0.65;
   const TUBE_LENGTH_MAX = 3;
@@ -225,7 +225,7 @@ function buildTubesScene(container) {
     }
   }
 
-  const animation = createTubesAnimation(pills, container);
+  const animation = createWavesAnimation(pills, container);
 
   return { pills, columnGroups: [], animation };
 }
@@ -258,7 +258,7 @@ const sceneBuilders = {
   mono: buildMonoScene,
   duo: buildDuoScene,
   grid: buildGridScene,
-  tubes: buildTubesScene,
+  waves: buildWavesScene,
 };
 
 // Build all scenes and return scenes object
@@ -522,8 +522,8 @@ function createGridAnimation(columnGroups, pills, pillGroup, COLS) {
   };
 }
 
-// Create tubes scene animation (continuous scrolling)
-function createTubesAnimation(pills, pillGroup) {
+// Create waves scene animation (continuous scrolling)
+function createWavesAnimation(pills, pillGroup) {
   const SCALE_START = 1;
   const SCALE_END = 0.6;
   const ZOOM_DURATION = 3;

@@ -24,7 +24,6 @@ const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
 camera.position.set(0, 0, 10);
 
 // Renderer - size set by resize()
-let supersample = 1.5;
 const renderer = new WebGPURenderer({ antialias: true });
 document.body.appendChild(renderer.domElement);
 
@@ -34,7 +33,7 @@ stats.dom.style.display = 'none';
 document.body.appendChild(stats.dom);
 
 // Post-processing
-const postFX = new PostFX(renderer, scene, camera, supersample);
+const postFX = new PostFX(renderer, scene, camera);
 
 // Frame rate limiting
 const targetFPS = 60;
@@ -103,7 +102,7 @@ function fadeIn() {
   gsap.fromTo(
     postFX.opacity,
     { value: 0 },
-    { value: 1, duration: 1, ease: 'none' }
+    { value: 1, duration: 1.5, ease: 'none' }
   );
 }
 
@@ -146,7 +145,7 @@ function doResize() {
   }
   sceneGroup.scale.setScalar(responsiveScale);
 
-  postFX.resize(supersample);
+  postFX.resize();
 }
 
 // Debounced resize for window resize events
@@ -208,6 +207,8 @@ window.addEventListener('keydown', (e) => {
     prevScene();
   } else if (e.key === 'ArrowRight') {
     nextScene();
+  } else if (e.key === 'q' || e.key === 'Q') {
+    toggleControls();
   }
 });
 
@@ -263,13 +264,8 @@ gui = createGUI({
   pillGroup,
   pills: getCurrentPills,
   postFX,
-  resize,
   startAnimation,
   stopAnimation,
-  getSupersample: () => supersample,
-  setSupersample: (v) => {
-    supersample = v;
-  },
   orbitControls: controls,
   sceneOrder,
   updateSceneCounter,
@@ -292,19 +288,20 @@ function initApp() {
   const allPills = Object.values(scenes).flatMap((s) => s.pills);
   const allGlowPlanes = allPills.map((p) => p.glowPlane);
 
-  // Render one frame with all scenes visible to compile shaders
-  // (opacity is 0 so user sees black)
-  postFX.render(allPills, 1.0, allGlowPlanes);
+  // Render one frame async with all scenes visible to compile shaders
+  // (opacity is 1 for debugging - can see prerender)
+  postFX.opacity.value = 1;
+  postFX.renderAsync(allPills, 1.0, allGlowPlanes).then(() => {
+    // Hide all scenes after shader compilation
+    Object.values(scenes).forEach((s) => (s.container.visible = false));
 
-  // Hide all scenes after shader compilation
-  Object.values(scenes).forEach((s) => (s.container.visible = false));
+    // Hide loading screen
+    document.getElementById('loading').style.display = 'none';
 
-  // Hide loading screen
-  document.getElementById('loading').style.display = 'none';
-
-  // Switch to first scene and start
-  switchScene('duo');
-  gui.applySceneSettings('duo');
-  updateSceneCounter(0);
-  startAnimation();
+    // Switch to first scene and start
+    switchScene('duo');
+    gui.applySceneSettings('duo');
+    updateSceneCounter(0);
+    startAnimation();
+  });
 }

@@ -3,8 +3,20 @@ import { PostProcessing, MeshBasicNodeMaterial } from 'three/webgpu';
 import { pass, float, sub, uniform, select, texture, mul, screenUV, vec3, sin, fract, add } from 'three/tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 
+// Max texture size for large displays
+const MAX_TEXTURE_SIZE = 4096;
+
+// Calculate render target size with DPR and max size cap
+function getTargetSize() {
+  const dpr = Math.min(window.devicePixelRatio, 2);
+  return {
+    w: Math.min(window.innerWidth * dpr, MAX_TEXTURE_SIZE),
+    h: Math.min(window.innerHeight * dpr, MAX_TEXTURE_SIZE),
+  };
+}
+
 export class PostFX {
-  constructor(renderer, scene, camera, supersample = 2) {
+  constructor(renderer, scene, camera) {
     this.renderer = renderer;
     this.scene = scene;
     this.camera = camera;
@@ -13,13 +25,8 @@ export class PostFX {
     this.whiteMaterial = new MeshBasicNodeMaterial();
     this.whiteMaterial.colorNode = float(1.0);
 
-    // Render targets - cap DPR at 2 to avoid excessive texture sizes.
-    // NOTE: Chrome DevTools device emulation can report incorrect window dimensions
-    // during mode switches, causing WebGPU texture size exceeded errors. This is a
-    // known Chrome bug - real devices report correct dimensions.
-    const dpr = Math.min(window.devicePixelRatio, 2);
-    const w = window.innerWidth * dpr * supersample;
-    const h = window.innerHeight * dpr * supersample;
+    // Render targets (sized by resize())
+    const { w, h } = getTargetSize();
     this.colorTarget = new THREE.RenderTarget(w, h);
     this.maskTarget = new THREE.RenderTarget(w, h);
     this.glowTarget = new THREE.RenderTarget(w, h);
@@ -97,16 +104,14 @@ export class PostFX {
     this.postProcessing.outputNode = debugOutput;
   }
 
-  resize(supersample) {
-    const dpr = Math.min(window.devicePixelRatio, 2);
-    const w = window.innerWidth * dpr * supersample;
-    const h = window.innerHeight * dpr * supersample;
+  resize() {
+    const { w, h } = getTargetSize();
     this.colorTarget.setSize(w, h);
     this.maskTarget.setSize(w, h);
     this.glowTarget.setSize(w, h);
 
-    // Resize the scenePass internal render target
-    this.scenePass.setSize(window.innerWidth, window.innerHeight);
+    // Resize the scenePass internal render target (must match other targets)
+    this.scenePass.setSize(w, h);
   }
 
   render(pills, savedEdgeGlow, glowPlanes = []) {
@@ -144,6 +149,46 @@ export class PostFX {
 
     // Render post-processing (scenePass renders without glow planes)
     postProcessing.render();
+
+    // Restore glow planes visibility
+    glowPlanes.forEach((glow) => (glow.mesh.visible = true));
+  }
+
+  async renderAsync(pills, savedEdgeGlow, glowPlanes = []) {
+    const { renderer, scene, camera, colorTarget, maskTarget, glowTarget, whiteMaterial, postProcessing } = this;
+
+    // Hide glow planes for all main renders (they'll be composited separately)
+    glowPlanes.forEach((glow) => (glow.mesh.visible = false));
+
+    // Render color pass with edgeGlow=0
+    pills.forEach((pill) => (pill.uniforms.edgeGlow.value = 0));
+    renderer.setRenderTarget(colorTarget);
+    await renderer.renderAsync(scene, camera);
+
+    // Render mask pass (pills only with white override)
+    scene.overrideMaterial = whiteMaterial;
+    renderer.setRenderTarget(maskTarget);
+    await renderer.renderAsync(scene, camera);
+    scene.overrideMaterial = null;
+
+    // Restore edgeGlow for scenePass (used in bloom extraction)
+    pills.forEach((pill) => (pill.uniforms.edgeGlow.value = savedEdgeGlow));
+
+    // Render glow planes to separate target (pills hidden)
+    pills.forEach((pill) => (pill.mesh.visible = false));
+    glowPlanes.forEach((glow) => (glow.mesh.visible = true));
+    renderer.setRenderTarget(glowTarget);
+    await renderer.renderAsync(scene, camera);
+
+    // Restore pills visibility
+    pills.forEach((pill) => (pill.mesh.visible = true));
+    // Hide glow planes again for scenePass render
+    glowPlanes.forEach((glow) => (glow.mesh.visible = false));
+
+    renderer.setRenderTarget(null);
+
+    // Render post-processing
+    await postProcessing.renderAsync();
 
     // Restore glow planes visibility
     glowPlanes.forEach((glow) => (glow.mesh.visible = true));

@@ -6,11 +6,8 @@ export function createGUI({
   pillGroup,
   pills,
   postFX,
-  resize,
   startAnimation,
   stopAnimation,
-  getSupersample,
-  setSupersample,
   orbitControls,
   sceneOrder,
   updateSceneCounter,
@@ -47,7 +44,7 @@ export function createGUI({
       waveAmp: 0,
       glowIntensity: 0.5,
     },
-    tubes: {
+    waves: {
       rotation: 90,
       glowFalloff: 3,
       edgeGlow: 1.0,
@@ -110,14 +107,7 @@ export function createGUI({
     });
 
   // Render settings
-  const renderParams = { supersample: getSupersample(), wireframe: false };
-  gui
-    .add(renderParams, 'supersample', [1, 1.5, 2])
-    .name('supersample')
-    .onChange((v) => {
-      setSupersample(v);
-      resize();
-    });
+  const renderParams = { wireframe: false };
 
   // Animation pause
   const animParams = { paused: false };
@@ -157,9 +147,9 @@ export function createGUI({
     });
 
   // Sensor noise
-  const noiseParams = { noise: 0.05 };
+  const noiseParams = { noise: 0.04 };
   gui
-    .add(noiseParams, 'noise', 0, 0.2)
+    .add(noiseParams, 'noise', 0, 0.1)
     .name('sensor noise')
     .onChange((v) => {
       postFX.noiseStrength.value = v;
